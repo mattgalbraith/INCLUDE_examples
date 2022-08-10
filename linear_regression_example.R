@@ -11,7 +11,7 @@ if (!require("broom")) install.packages("broom"); library("broom") # for extract
 if (!require("ggforce")) install.packages("ggforce"); library("ggforce") # required for sina plots
 if (!require("ggrepel")) install.packages("ggrepel"); library("ggrepel") # labels
 if (!require("plotly")) install.packages("plotly"); library("plotly") # required for interactive plots
-if (!require("here")) install.packages("here"); library("here") # required for interactive plots
+if (!require("here")) install.packages("here"); library("here") # managing dir paths
 
 standard_colors <- c("Control" = "gray60", "T21" = "#009b4e")
 
