@@ -17,11 +17,11 @@ standard_colors <- c("Control" = "gray60", "T21" = "#009b4e")
 
 
 # get list of files
-msd_data_files <- list.files(path = "/sbgenomics/project-files/", pattern = "LCMS_Metabolomics.tsv.gz", full.names = TRUE)
+metab_data_files <- list.files(path = "/sbgenomics/project-files/", pattern = "LCMS_Metabolomics.tsv.gz", full.names = TRUE)
 
 # Concatenate individual sample-level files
 tic()
-msd_data <- msd_data_files %>% 
+metab_data <- msd_data_files %>% 
   map_dfr(~read_tsv(., id = "file")) %>% 
   mutate(filename = basename(file)) %>% 
   select(LabID, everything())
@@ -33,9 +33,9 @@ toc() # ~18.557 sec elapsed
 
 
 # Prepare data for linear regression -----
-# assumes  "msd_data" is in long format already joined with clinical data
+# assumes  "metab_data" is in long format already joined with clinical data
 # "LabID" is unique sample identifier; "Analyte" denotes each feature of interest; "Value" is the actual measurement; here "Karyotype" contains 2 levels: " and "T21"
-regressions_dat <- msd_data %>%
+regressions_dat <- metab_data %>%
   # select(LabID, Karyotype, Sex, Age, Analyte, Value) %>% 
   select(LabID, Analyte, Value) %>% 
   mutate(Karyotype = if_else(str_detect(LabID, "A"), "T21", "Control")) %>% # NEED TO REPLACE WITH ACTUAL CLINICAL DATA JOIN
