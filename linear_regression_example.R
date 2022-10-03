@@ -1,7 +1,7 @@
 ############################################################
 # linear_regression_example.R                              #
 # Script original author: Matthew Galbraith                #
-# version: 0.3  Date: 07_15_2022                           #
+# version: 0.3.1  Date: 03_10_2022                         #
 ############################################################
 
 if (!require("tidyverse")) install.packages("tidyverse"); library("tidyverse")
@@ -11,7 +11,7 @@ if (!require("broom")) install.packages("broom"); library("broom") # for extract
 if (!require("ggforce")) install.packages("ggforce"); library("ggforce") # required for sina plots
 if (!require("ggrepel")) install.packages("ggrepel"); library("ggrepel") # labels
 if (!require("plotly")) install.packages("plotly"); library("plotly") # required for interactive plots
-if (!require("here")) install.packages("here"); library("here") # managing dir paths
+if (!require("here")) install.packages("here"); library("here") # required for interactive plots
 
 standard_colors <- c("Control" = "gray60", "T21" = "#009b4e")
 
@@ -21,11 +21,11 @@ metab_data_files <- list.files(path = "/sbgenomics/project-files/", pattern = "L
 
 # Concatenate individual sample-level files
 tic()
-metab_data <- msd_data_files %>% 
+metab_data <- metab_data_files %>% 
   map_dfr(~read_tsv(., id = "file")) %>% 
   mutate(filename = basename(file)) %>% 
   select(LabID, everything())
-toc() # ~18.557 sec elapsed
+toc() # ~18 sec elapsed
 
 
 # SHOULD BE IMPORTING CLINICAL DATA (Karyotype, Age, Sex, etc) AND JOINING HERE
@@ -33,8 +33,8 @@ toc() # ~18.557 sec elapsed
 
 
 # Prepare data for linear regression -----
-# assumes  "metab_data" is in long format already joined with clinical data
-# "LabID" is unique sample identifier; "Analyte" denotes each feature of interest; "Value" is the actual measurement; here "Karyotype" contains 2 levels: " and "T21"
+# assumes  "metab_data" is in long (ie tidy) format already joined with clinical data
+# "LabID" is unique sample identifier; "Analyte" denotes each feature of interest; "Value" is the actual measurement; here "Karyotype" contains 2 levels: "Control" and "T21"
 regressions_dat <- metab_data %>%
   # select(LabID, Karyotype, Sex, Age, Analyte, Value) %>% 
   select(LabID, Analyte, Value) %>% 
@@ -49,8 +49,8 @@ regressions_dat <- metab_data %>%
   filter(extreme != TRUE) %>% # remove extreme outliers
   # I would usually also check here for:
   # 1) a minimum number of samples per group (eg 5) and 
-  # 2) that there are >1 levels for categorical veriables of interest (prevents errors in regression step)
-  nest(-Analyte) # nesting allows for easy testing of all features ~ at once
+  # 2) that there are >1 levels for categorical variables of interest (prevents errors in regression step)
+  nest(data = c(LabID, Value, Karyotype, extreme)) # nesting allows for easy testing of all features ~ at once
 
 
 # Run simple linear regression for each feature with log2(Value) as outcome and "Karyotype" as predictor -----
@@ -62,7 +62,7 @@ regressions_simple <- regressions_dat %>%
     # glanced = map(fit, broom::glance), # see ?glance.lm # NOT NEEDED FOR DEMO
     # augmented = map(fit, broom::augment), # see ?augment.lm # NOT NEEDED FOR DEMO
   )
-toc()
+toc()  # <1 sec elapsed
 # Run linear regression for each feature with log2(Value) as outcome, "Karyotype" as predictor, and Age + Sex and nuisance variables -----
 # THIS WILL CURRENTLY FAIL AS WE DO NOT HAVE AGE OR SEX VARIABLES!!!!
 tic("Running linear regressions for multi model with Age + Sex...")
@@ -206,7 +206,3 @@ regressions_dat %>%
     title = "Plasma metabolites: T21 vs Control",
   )
 ggsave("/sbgenomics/output-files/sina.png")
-
-
-
-
